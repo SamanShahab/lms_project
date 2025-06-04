@@ -1,0 +1,174 @@
+CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    role ENUM('student', 'teacher') NOT NULL
+);
+
+CREATE TABLE courses (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    teacher_id INT,
+    FOREIGN KEY (teacher_id) REFERENCES users(id)
+);
+
+CREATE TABLE enrollments (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    student_id INT,
+    course_id INT,
+    FOREIGN KEY (student_id) REFERENCES users(id),
+    FOREIGN KEY (course_id) REFERENCES courses(id)
+);
+
+CREATE TABLE assignments (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    course_id INT,
+    title VARCHAR(255),
+    description TEXT,
+    due_date DATE,
+    FOREIGN KEY (course_id) REFERENCES courses(id)
+);
+
+CREATE TABLE assignment_submissions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    assignment_id INT,
+    student_id INT,
+    submission_text TEXT,
+    submitted_at DATETIME,
+    FOREIGN KEY (assignment_id) REFERENCES assignments(id),
+    FOREIGN KEY (student_id) REFERENCES users(id)
+);
+
+CREATE TABLE quizzes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    course_id INT,
+    title VARCHAR(255),
+    FOREIGN KEY (course_id) REFERENCES courses(id)
+);
+
+CREATE TABLE quiz_questions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    quiz_id INT,
+    question_text TEXT,
+    FOREIGN KEY (quiz_id) REFERENCES quizzes(id)
+);
+
+CREATE TABLE quiz_submissions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    student_id INT,
+    quiz_id INT,
+    question_id INT,
+    answer TEXT,
+    FOREIGN KEY (student_id) REFERENCES users(id),
+    FOREIGN KEY (quiz_id) REFERENCES quizzes(id),
+    FOREIGN KEY (question_id) REFERENCES quiz_questions(id)
+);
+
+CREATE TABLE attendance (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    course_id INT,
+    student_id INT,
+    date DATE,
+    status ENUM('present', 'absent', 'late'),
+    FOREIGN KEY (course_id) REFERENCES courses(id),
+    FOREIGN KEY (student_id) REFERENCES users(id)
+);
+
+CREATE TABLE student_progress (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    student_id INT,
+    course_id INT,
+    progress INT DEFAULT 0,
+    FOREIGN KEY (student_id) REFERENCES users(id),
+    FOREIGN KEY (course_id) REFERENCES courses(id)
+);
+
+CREATE TABLE grades (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    student_id INT,
+    assignment_id INT,
+    quiz_id INT,
+    grade DECIMAL(5,2),
+    feedback TEXT,
+    FOREIGN KEY (student_id) REFERENCES users(id),
+    FOREIGN KEY (assignment_id) REFERENCES assignments(id),
+    FOREIGN KEY (quiz_id) REFERENCES quizzes(id)
+); 
+
+CREATE TABLE announcements (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    course_id INT NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    content TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (course_id) REFERENCES courses(id)
+);
+
+-- Users (students and teachers)
+INSERT INTO users (name, email, password, role) VALUES
+('Alice Johnson', 'alice@example.com', 'hashed_password_1', 'student'),
+('Bob Smith', 'bob@example.com', 'hashed_password_2', 'student'),
+('Carol White', 'carol@example.com', 'hashed_password_3', 'teacher'),
+('David Black', 'david@example.com', 'hashed_password_4', 'teacher');
+
+-- Courses
+INSERT INTO courses (name, description, teacher_id) VALUES
+('Mathematics 101', 'Basic math concepts', 3),
+('Physics 201', 'Introduction to Physics', 4);
+
+-- Enrollments (students enrolled in courses)
+INSERT INTO enrollments (student_id, course_id) VALUES
+(1, 1),
+(2, 1),
+(1, 2);
+
+-- Assignments
+INSERT INTO assignments (course_id, title, description, due_date) VALUES
+(1, 'Algebra Homework', 'Solve problems 1-10', '2025-06-01'),
+(2, 'Physics Lab Report', 'Write a report on experiment 3', '2025-06-10');
+
+-- Assignment submissions
+INSERT INTO assignment_submissions (assignment_id, student_id, submission_text, submitted_at) VALUES
+(1, 1, 'Answers to algebra homework...', '2025-05-20 10:00:00'),
+(2, 1, 'Physics lab report text...', '2025-05-25 14:30:00');
+
+-- Quizzes
+INSERT INTO quizzes (course_id, title) VALUES
+(1, 'Math Quiz 1'),
+(2, 'Physics Quiz 1');
+
+-- Quiz questions
+INSERT INTO quiz_questions (quiz_id, question_text) VALUES
+(1, 'What is 2 + 2?'),
+(1, 'Define a prime number.'),
+(2, 'What is Newton\'s Second Law?');
+
+-- Quiz submissions (student answers)
+INSERT INTO quiz_submissions (student_id, quiz_id, question_id, answer) VALUES
+(1, 1, 1, '4'),
+(1, 1, 2, 'A prime number is a number greater than 1 that has no divisors other than 1 and itself'),
+(1, 2, 3, 'Force equals mass times acceleration');
+
+-- Attendance
+INSERT INTO attendance (course_id, student_id, date, status) VALUES
+(1, 1, '2025-05-20', 'present'),
+(1, 2, '2025-05-20', 'absent'),
+(2, 1, '2025-05-21', 'late');
+
+INSERT INTO student_progress (student_id, course_id, progress) VALUES
+(1, 1, 85),  -- Alice in Mathematics 101
+(1, 2, 70),  -- Alice in Physics 201
+(2, 1, 60);  -- Bob in Mathematics 101
+
+INSERT INTO grades (student_id, assignment_id, quiz_id, grade, feedback) VALUES
+(1, 1, 1, 88.50, 'Well done in Algebra and quiz.'),
+(1, 2, 2, 79.00, 'Decent performance in Physics assignment and quiz'),
+(2, 1, NULL, 68.00, 'Bob submitted only the assignment, quiz missing');
+
+
+ALTER TABLE quiz_submissions ADD COLUMN file_path VARCHAR(255) DEFAULT NULL;
+ALTER TABLE quiz_submissions ADD COLUMN marks DECIMAL(5,2);
+
+
